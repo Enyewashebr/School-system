@@ -2,15 +2,30 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 
+const pool = require('./config/db')
+const studentRoutes = require('../src/routes/StudentRoutes')
+
 const app = express()
 
 app.use(cors())
 app.use(express.json())
+app.use('/api/students', studentRoutes)
+app.get('/', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()')
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'School Management System API is running',
-  })
+    res.json({
+      message: 'School Management System API is running',
+      database: 'connected',
+      time: result.rows[0].now,
+    })
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json({
+      message: 'Database connection failed',
+    })
+  }
 })
 
 const PORT = process.env.PORT || 5000
