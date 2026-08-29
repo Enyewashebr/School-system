@@ -53,22 +53,42 @@ function Register() {
     })
   }
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
+  const handleSubmit = async (event) => {
+  event.preventDefault()
 
-    const generatedNumber =
-      `APP-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/applications/register',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          grade,
+          dateOfBirth,
+        }),
+      }
+    )
 
-    console.log('Registration:', formData)
+    const data = await response.json()
 
-    setApplicationNumber(generatedNumber)
-    setSubmitted(true)
+    if (!response.ok) {
+      throw new Error(data.message)
+    }
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
+    navigate('/registration-success', {
+      state: {
+        applicationId: data.application.application_id,
+      },
     })
+
+  } catch (error) {
+    console.error(error)
+    alert('Registration failed')
   }
+}
 
   if (submitted) {
     return (

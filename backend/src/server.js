@@ -4,12 +4,14 @@ require('dotenv').config()
 
 const pool = require('./config/db')
 const studentRoutes = require('../src/routes/StudentRoutes')
+const applicationRoutes = require('../src/routes/applicationRoutes')
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 app.use('/api/students', studentRoutes)
+app.use('/api/applications', applicationRoutes)
 app.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()')
