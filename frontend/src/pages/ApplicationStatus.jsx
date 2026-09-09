@@ -1,48 +1,48 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function ApplicationStatus() {
-  const application = {
-    applicationNumber: 'APP-2026-123456',
-    studentName: 'John Doe',
-    grade: 'Grade 10',
-    submittedDate: 'August 20, 2026',
-    status: 'Under Review',
-  }
+  const [applicationId, setApplicationId] = useState('')
+  const [application, setApplication] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const steps = [
-    {
-      title: 'Application Submitted',
-      description: 'Your application has been successfully submitted.',
-      completed: true,
-    },
-    {
-      title: 'Application Under Review',
-      description: 'The school administration is reviewing your application.',
-      completed: application.status !== 'Submitted',
-    },
-    {
-      title:
-        application.status === 'Rejected'
-          ? 'Application Rejected'
-          : 'Admission Decision',
-      description:
-        application.status === 'Rejected'
-          ? 'Your application was not approved.'
-          : application.status === 'Accepted'
-            ? 'Your application has been approved by the school.'
-            : 'The school has not made a final decision yet.',
-      completed:
-        application.status === 'Accepted' ||
-        application.status === 'Rejected',
-    },
-  ]
+  const checkStatus = async (event) => {
+    event.preventDefault()
+
+    if (!applicationId.trim()) {
+      setError('Please enter your application number.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setApplication(null)
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/applications/${applicationId.trim()}`
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Application not found')
+      }
+
+      setApplication(data)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
       <header className="border-b border-gray-200 bg-white">
-
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
 
           <div>
@@ -63,7 +63,6 @@ function ApplicationStatus() {
           </Link>
 
         </div>
-
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
@@ -80,80 +79,110 @@ function ApplicationStatus() {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Check the current status of your student application.
+            Enter your application number to check your application.
           </p>
 
         </div>
 
-        {/* Application Summary */}
+        {/* Search Form */}
         <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
 
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <form
+            onSubmit={checkStatus}
+            className="flex flex-col gap-4 sm:flex-row"
+          >
 
-            <div>
+            <input
+              type="text"
+              value={applicationId}
+              onChange={(event) =>
+                setApplicationId(event.target.value)
+              }
+              placeholder="e.g. APP-1756123456789"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+            />
 
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Application Number
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-lg bg-blue-700 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? 'Checking...' : 'Check Status'}
+            </button>
+
+          </form>
+
+          {error && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-700">
+                {error}
               </p>
-
-              <p className="mt-1 text-lg font-bold text-gray-900">
-                {application.applicationNumber}
-              </p>
-
             </div>
-
-            <StatusBadge status={application.status} />
-
-          </div>
-
-          <div className="mt-6 grid gap-5 border-t border-gray-100 pt-6 sm:grid-cols-3">
-
-            <Info
-              label="Student"
-              value={application.studentName}
-            />
-
-            <Info
-              label="Requested Grade"
-              value={application.grade}
-            />
-
-            <Info
-              label="Submitted"
-              value={application.submittedDate}
-            />
-
-          </div>
+          )}
 
         </section>
 
-        {/* Timeline */}
-        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+        {/* Application Result */}
+        {application && (
+          <>
+            {/* Summary */}
+            <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
 
-          <h2 className="font-semibold text-gray-900">
-            Application Progress
-          </h2>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
-          <div className="mt-8">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Application Number
+                  </p>
 
-            {steps.map((step, index) => (
+                  <p className="mt-1 text-lg font-bold text-gray-900">
+                    {application.application_id}
+                  </p>
+                </div>
 
-              <TimelineStep
-                key={step.title}
-                title={step.title}
-                description={step.description}
-                completed={step.completed}
-                isLast={index === steps.length - 1}
-              />
+                <StatusBadge status={application.status} />
 
-            ))}
+              </div>
 
-          </div>
+              <div className="mt-6 grid gap-5 border-t border-gray-100 pt-6 sm:grid-cols-3">
 
-        </section>
+                <Info
+                  label="Student"
+                  value={application.full_name}
+                />
 
-        {/* Current Status Message */}
-        <StatusMessage status={application.status} />
+                <Info
+                  label="Requested Grade"
+                  value={`Grade ${application.grade}`}
+                />
+
+                <Info
+                  label="Submitted"
+                  value={formatDate(application.submitted_at)}
+                />
+
+              </div>
+
+            </section>
+
+            {/* Timeline */}
+            <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+
+              <h2 className="font-semibold text-gray-900">
+                Application Progress
+              </h2>
+
+              <div className="mt-8">
+                <Timeline application={application} />
+              </div>
+
+            </section>
+
+            {/* Status Message */}
+            <StatusMessage status={application.status} />
+
+          </>
+        )}
 
         {/* Back */}
         <div className="mt-8 text-center">
@@ -173,6 +202,63 @@ function ApplicationStatus() {
   )
 }
 
+
+/* Timeline */
+
+function Timeline({ application }) {
+  const status = normalizeStatus(application.status)
+
+  const steps = [
+    {
+      title: 'Application Submitted',
+      description:
+        'Your application has been successfully submitted.',
+      completed: true,
+    },
+    {
+      title: 'Application Under Review',
+      description:
+        'The school administration is reviewing your application.',
+      completed:
+        status === 'under review' ||
+        status === 'accepted' ||
+        status === 'rejected',
+    },
+    {
+      title:
+        status === 'rejected'
+          ? 'Application Rejected'
+          : 'Admission Decision',
+      description:
+        status === 'rejected'
+          ? 'Your application was not approved.'
+          : status === 'accepted'
+            ? 'Your application has been approved by the school.'
+            : 'The school has not made a final decision yet.',
+      completed:
+        status === 'accepted' ||
+        status === 'rejected',
+    },
+  ]
+
+  return (
+    <>
+      {steps.map((step, index) => (
+        <TimelineStep
+          key={step.title}
+          title={step.title}
+          description={step.description}
+          completed={step.completed}
+          isLast={index === steps.length - 1}
+        />
+      ))}
+    </>
+  )
+}
+
+
+/* Timeline Step */
+
 function TimelineStep({
   title,
   description,
@@ -182,7 +268,6 @@ function TimelineStep({
   return (
     <div className="flex gap-4">
 
-      {/* Timeline Icon + Line */}
       <div className="flex flex-col items-center">
 
         <div
@@ -207,7 +292,6 @@ function TimelineStep({
 
       </div>
 
-      {/* Content */}
       <div className="pb-8">
 
         <h3
@@ -230,8 +314,13 @@ function TimelineStep({
   )
 }
 
+
+/* Status Message */
+
 function StatusMessage({ status }) {
-  if (status === 'Accepted') {
+  const normalizedStatus = normalizeStatus(status)
+
+  if (normalizedStatus === 'accepted') {
     return (
       <section className="mt-6 rounded-xl border border-green-200 bg-green-50 p-6">
 
@@ -249,7 +338,7 @@ function StatusMessage({ status }) {
     )
   }
 
-  if (status === 'Rejected') {
+  if (normalizedStatus === 'rejected') {
     return (
       <section className="mt-6 rounded-xl border border-red-200 bg-red-50 p-6">
 
@@ -266,7 +355,10 @@ function StatusMessage({ status }) {
     )
   }
 
-  if (status === 'Under Review') {
+  if (
+    normalizedStatus === 'under review' ||
+    normalizedStatus === 'pending'
+  ) {
     return (
       <section className="mt-6 rounded-xl border border-yellow-200 bg-yellow-50 p-6">
 
@@ -299,24 +391,42 @@ function StatusMessage({ status }) {
   )
 }
 
+
+/* Status Badge */
+
 function StatusBadge({ status }) {
+  const normalizedStatus = normalizeStatus(status)
+
   const styles = {
-    Submitted: 'bg-blue-100 text-blue-700',
-    'Under Review': 'bg-yellow-100 text-yellow-700',
-    Accepted: 'bg-green-100 text-green-700',
-    Rejected: 'bg-red-100 text-red-700',
+    submitted: 'bg-blue-100 text-blue-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+    'under review': 'bg-yellow-100 text-yellow-700',
+    accepted: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+  }
+
+  const labels = {
+    submitted: 'Submitted',
+    pending: 'Under Review',
+    'under review': 'Under Review',
+    accepted: 'Accepted',
+    rejected: 'Rejected',
   }
 
   return (
     <span
       className={`w-fit rounded-full px-4 py-2 text-xs font-semibold ${
-        styles[status] || 'bg-gray-100 text-gray-600'
+        styles[normalizedStatus] ||
+        'bg-gray-100 text-gray-600'
       }`}
     >
-      {status}
+      {labels[normalizedStatus] || status}
     </span>
   )
 }
+
+
+/* Info */
 
 function Info({ label, value }) {
   return (
@@ -332,6 +442,25 @@ function Info({ label, value }) {
 
     </div>
   )
+}
+
+
+/* Helpers */
+
+function normalizeStatus(status) {
+  return String(status || '')
+    .toLowerCase()
+    .trim()
+}
+
+function formatDate(date) {
+  if (!date) return '—'
+
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 export default ApplicationStatus

@@ -1,88 +1,186 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 function News() {
-  const [news, setNews] = useState([
-    {
-      id: 1,
-      title: 'New Academic Year Registration',
-      date: 'August 20, 2026',
-      status: 'Published',
-      content:
-        'Registration for the new academic year is now open for Grades 9-12.',
-    },
-    {
-      id: 2,
-      title: 'Welcome Back to School',
-      date: 'August 18, 2026',
-      status: 'Published',
-      content:
-        'We welcome all students back for the new academic year.',
-    },
-    {
-      id: 3,
-      title: 'School Orientation Program',
-      date: 'August 25, 2026',
-      status: 'Draft',
-      content:
-        'Details about the upcoming student orientation program.',
-    },
-  ])
+  const { token } = useAuth()
 
+  const [news, setNews] = useState([])
   const [showForm, setShowForm] = useState(false)
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
 
-  const handleCreate = (event) => {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  // Load news
+  const fetchNews = async () => {
+    try {
+      setLoading(true)
+      setError('')
+
+      const response = await fetch(
+        'http://localhost:5000/api/news'
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to load news'
+        )
+      }
+
+      setNews(data)
+    } catch (error) {
+      console.error(error)
+      setError('Failed to load news.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchNews()
+  }, [])
+
+  // Create news
+  const handleCreate = async (event) => {
     event.preventDefault()
 
     if (!title.trim() || !content.trim()) {
+      setError('Title and content are required.')
       return
     }
 
-    const newNews = {
-      id: Date.now(),
-      title: title.trim(),
-      content: content.trim(),
-      date: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      status: 'Draft',
+    if (!token) {
+      setError('You are not logged in.')
+      return
     }
 
-    setNews((currentNews) => [
-      newNews,
-      ...currentNews,
-    ])
+    try {
+      setSaving(true)
+      setError('')
 
-    setTitle('')
-    setContent('')
-    setShowForm(false)
-  }
-
-  const toggleStatus = (id) => {
-    setNews((currentNews) =>
-      currentNews.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status:
-                item.status === 'Published'
-                  ? 'Draft'
-                  : 'Published',
-            }
-          : item
+      const response = await fetch(
+        'http://localhost:5000/api/news',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            content: content.trim(),
+            published: false,
+          }),
+        }
       )
-    )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to create news'
+        )
+      }
+
+      setTitle('')
+      setContent('')
+      setShowForm(false)
+
+      await fetchNews()
+    } catch (error) {
+      console.error(error)
+      setError(error.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const deleteNews = (id) => {
-    setNews((currentNews) =>
-      currentNews.filter((item) => item.id !== id)
+  // Publish / Unpublish
+  const toggleStatus = async (item) => {
+    if (!token) {
+      setError('You are not logged in.')
+      return
+    }
+
+    try {
+      setError('')
+
+      const response = await fetch(
+        `http://localhost:5000/api/news/${item.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: item.title,
+            content: item.content,
+            published: !item.published,
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to update news'
+        )
+      }
+
+      await fetchNews()
+    } catch (error) {
+      console.error(error)
+      setError(error.message)
+    }
+  }
+
+  // Delete
+  const deleteNews = async (id) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this news?'
     )
+
+    if (!confirmed) return
+
+    if (!token) {
+      setError('You are not logged in.')
+      return
+    }
+
+    try {
+      setError('')
+
+      const response = await fetch(
+        `http://localhost:5000/api/news/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to delete news'
+        )
+      }
+
+      await fetchNews()
+    } catch (error) {
+      console.error(error)
+      setError(error.message)
+    }
   }
 
   return (
@@ -94,7 +192,6 @@ function News() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 
           <div>
-
             <p className="text-lg font-bold text-gray-900">
               School Administration
             </p>
@@ -102,7 +199,6 @@ function News() {
             <p className="text-xs text-gray-500">
               Principal Portal
             </p>
-
           </div>
 
           <Link
@@ -139,13 +235,25 @@ function News() {
 
           <button
             type="button"
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowForm(!showForm)
+              setError('')
+            }}
             className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
           >
             {showForm ? 'Cancel' : '+ Create News'}
           </button>
 
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-700">
+              {error}
+            </p>
+          </div>
+        )}
 
         {/* Create Form */}
         {showForm && (
@@ -208,9 +316,10 @@ function News() {
 
               <button
                 type="submit"
-                className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
+                disabled={saving}
+                className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save as Draft
+                {saving ? 'Saving...' : 'Save as Draft'}
               </button>
 
             </form>
@@ -233,70 +342,99 @@ function News() {
 
           </div>
 
-          <div className="space-y-4">
+          {/* Loading */}
+          {loading && (
+            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+              <p className="text-sm text-gray-500">
+                Loading news...
+              </p>
+            </div>
+          )}
 
-            {news.map((item) => (
+          {/* Empty */}
+          {!loading && news.length === 0 && (
+            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
 
-              <article
-                key={item.id}
-                className="rounded-xl bg-white p-6 shadow-sm"
-              >
+              <p className="font-medium text-gray-900">
+                No news yet
+              </p>
 
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <p className="mt-1 text-sm text-gray-500">
+                Create your first news article.
+              </p>
 
-                  {/* Content */}
-                  <div className="min-w-0">
+            </div>
+          )}
 
-                    <div className="flex flex-wrap items-center gap-3">
+          {/* List */}
+          {!loading && news.length > 0 && (
+            <div className="space-y-4">
 
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {item.title}
-                      </h3>
+              {news.map((item) => (
 
-                      <NewsStatus status={item.status} />
+                <article
+                  key={item.id}
+                  className="rounded-xl bg-white p-6 shadow-sm"
+                >
+
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+
+                    {/* Content */}
+                    <div className="min-w-0">
+
+                      <div className="flex flex-wrap items-center gap-3">
+
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {item.title}
+                        </h3>
+
+                        <NewsStatus
+                          published={item.published}
+                        />
+
+                      </div>
+
+                      <p className="mt-2 text-xs text-gray-400">
+                        {formatDate(item.created_at)}
+                      </p>
+
+                      <p className="mt-4 max-w-3xl text-sm leading-6 text-gray-600">
+                        {item.content}
+                      </p>
 
                     </div>
 
-                    <p className="mt-2 text-xs text-gray-400">
-                      {item.date}
-                    </p>
+                    {/* Actions */}
+                    <div className="flex shrink-0 flex-wrap gap-2">
 
-                    <p className="mt-4 max-w-3xl text-sm leading-6 text-gray-600">
-                      {item.content}
-                    </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(item)}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      >
+                        {item.published
+                          ? 'Unpublish'
+                          : 'Publish'}
+                      </button>
 
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteNews(item.id)}
+                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
 
-                  {/* Actions */}
-                  <div className="flex shrink-0 flex-wrap gap-2">
-
-                    <button
-                      type="button"
-                      onClick={() => toggleStatus(item.id)}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                      {item.status === 'Published'
-                        ? 'Unpublish'
-                        : 'Publish'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => deleteNews(item.id)}
-                      className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    </div>
 
                   </div>
 
-                </div>
+                </article>
 
-              </article>
+              ))}
 
-            ))}
-
-          </div>
+            </div>
+          )}
 
         </section>
 
@@ -306,8 +444,8 @@ function News() {
   )
 }
 
-function NewsStatus({ status }) {
-  if (status === 'Published') {
+function NewsStatus({ published }) {
+  if (published) {
     return (
       <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
         Published
@@ -320,6 +458,16 @@ function NewsStatus({ status }) {
       Draft
     </span>
   )
+}
+
+function formatDate(date) {
+  if (!date) return ''
+
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 export default News

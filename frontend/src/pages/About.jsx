@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import schoolAbout from '../assets/school-about.png'
 
 function About() {
   return (
@@ -35,6 +36,18 @@ function About() {
 
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
 
+            {/* School Image */}
+            <div className="overflow-hidden rounded-2xl shadow-sm">
+
+              <img
+                src={schoolAbout}
+                alt="School grounds"
+                className="h-80 w-full object-cover md:h-96"
+              />
+
+            </div>
+
+            {/* Text */}
             <div>
 
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">
@@ -61,41 +74,41 @@ function About() {
 
             </div>
 
-            {/* Information Card */}
-            <div className="rounded-2xl bg-gray-50 p-8">
+          </div>
 
-              <h3 className="text-lg font-bold text-gray-900">
-                School Information
-              </h3>
+          {/* Information Card */}
+          <div className="mt-12 rounded-2xl bg-gray-50 p-8">
 
-              <div className="mt-6 space-y-5">
+            <h3 className="text-lg font-bold text-gray-900">
+              School Information
+            </h3>
 
-                <InfoRow
-                  label="School Type"
-                  value="Government / Public School"
-                />
+            <div className="mt-6 space-y-5">
 
-                <InfoRow
-                  label="Grades"
-                  value="9 – 12"
-                />
+              <InfoRow
+                label="School Type"
+                value="Government / Public School"
+              />
 
-                <InfoRow
-                  label="School Fees"
-                  value="No tuition fee"
-                />
+              <InfoRow
+                label="Grades"
+                value="9 – 12"
+              />
 
-                <InfoRow
-                  label="Education"
-                  value="Secondary Education"
-                />
+              <InfoRow
+                label="School Fees"
+                value="No tuition fee"
+              />
 
-                <InfoRow
-                  label="Admissions"
-                  value="Subject to school requirements"
-                />
+              <InfoRow
+                label="Education"
+                value="Secondary Education"
+              />
 
-              </div>
+              <InfoRow
+                label="Admissions"
+                value="Subject to school requirements"
+              />
 
             </div>
 
@@ -290,6 +303,7 @@ function About() {
 function InfoRow({ label, value }) {
   return (
     <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 last:border-0 last:pb-0 sm:flex-row sm:justify-between">
+
       <span className="text-sm text-gray-500">
         {label}
       </span>
@@ -297,6 +311,7 @@ function InfoRow({ label, value }) {
       <span className="text-sm font-semibold text-gray-900 sm:text-right">
         {value}
       </span>
+
     </div>
   )
 }

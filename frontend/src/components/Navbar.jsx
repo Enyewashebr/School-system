@@ -23,9 +23,10 @@ function Navbar() {
             className="flex items-center gap-3"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-700 text-lg font-bold text-white">
-              S
+            <div className="flex h-10 w-10 items-center justify-center ">
+              <img src="/logo school.png" alt="" />
             </div>
+            
 
             <div>
               <p className="text-sm font-bold leading-tight text-gray-900">

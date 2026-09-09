@@ -10,29 +10,69 @@ function Login() {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('student')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (event) => {
-  event.preventDefault()
-  setError('')
+  const handleSubmit = async (event) => {
+    event.preventDefault()
 
-  if (!email.trim() || !password.trim()) {
-    setError('Please enter your email and password.')
-    return
+    setError('')
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/auth/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Login failed'
+        )
+      }
+
+      // Make sure the selected account type
+      // matches the actual database role.
+      if (data.user.role !== role) {
+        setError('Incorrect account type selected.')
+        return
+      }
+
+      // Save the real user + JWT
+      login({
+        ...data.user,
+        token: data.token,
+      })
+
+      if (data.user.role === 'principal') {
+        navigate('/admin')
+      } else {
+        navigate('/student')
+      }
+
+    } catch (error) {
+      console.error(error)
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const userData = {
-    email: email.trim(),
-    role,
-  }
-
-  login(userData)
-
-  if (role === 'principal') {
-    navigate('/admin')
-  } else {
-    navigate('/student')
-  }
-}
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,11 +130,9 @@ function Login() {
             {/* Error */}
             {error && (
               <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-
                 <p className="text-sm font-medium text-red-700">
                   {error}
                 </p>
-
               </div>
             )}
 
@@ -162,23 +200,12 @@ function Login() {
               {/* Password */}
               <div>
 
-                <div className="mb-2 flex items-center justify-between">
-
-                  <label
-                    htmlFor="password"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Password
-                  </label>
-
-                  <button
-                    type="button"
-                    className="text-xs font-semibold text-blue-700 hover:text-blue-900"
-                  >
-                    Forgot password?
-                  </button>
-
-                </div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
 
                 <input
                   id="password"
@@ -197,9 +224,10 @@ function Login() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
+                disabled={loading}
+                className="w-full rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
 
             </form>

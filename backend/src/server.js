@@ -5,6 +5,9 @@ require('dotenv').config()
 const pool = require('./config/db')
 const studentRoutes = require('../src/routes/StudentRoutes')
 const applicationRoutes = require('../src/routes/applicationRoutes')
+const newsRoutes = require('../src/routes/newsRoutes')
+const authRoutes = require('./routes/authRoutes')
+
 
 const app = express()
 
@@ -12,6 +15,10 @@ app.use(cors())
 app.use(express.json())
 app.use('/api/students', studentRoutes)
 app.use('/api/applications', applicationRoutes)
+app.use('/api/news', newsRoutes)
+app.use('/api/auth', authRoutes)
+
+
 app.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()')

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-
+import schoolHome from '../assets/school-home.png'
 
 function Home() {
   const news = [
@@ -30,37 +30,52 @@ function Home() {
       <section className="bg-gray-50 py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
 
-          <div className="max-w-3xl">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
 
-            <span className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700">
-              Government / Public School
-            </span>
+            <div className="max-w-3xl">
 
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900 md:text-6xl">
-              Quality education for every student.
-            </h1>
+              <span className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700">
+                Government / Public School
+              </span>
 
-            <p className="mt-6 text-base leading-7 text-gray-600 md:text-lg">
-              Welcome to our government school. We provide
-              accessible secondary education for students in
-              Grades 9 through 12.
-            </p>
+              <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900 md:text-6xl">
+                Quality education for every student.
+              </h1>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <p className="mt-6 text-base leading-7 text-gray-600 md:text-lg">
+                Welcome to our government school. We provide
+                accessible secondary education for students in
+                Grades 9 through 12.
+              </p>
 
-              <Link
-                to="/register/student"
-                className="rounded-lg bg-blue-700 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-blue-800"
-              >
-                Register a Student
-              </Link>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
 
-              <Link
-                to="/about"
-                className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Learn More
-              </Link>
+                <Link
+                  to="/register/student"
+                  className="rounded-lg bg-blue-700 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  Register a Student
+                </Link>
+
+                <Link
+                  to="/about"
+                  className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Learn More
+                </Link>
+
+              </div>
+
+            </div>
+
+            {/* School Image */}
+            <div className="overflow-hidden rounded-2xl shadow-sm">
+
+              <img
+                src={schoolHome}
+                alt="Entrance of the school"
+                className="h-80 w-full object-cover md:h-96"
+              />
 
             </div>
 
@@ -183,26 +198,43 @@ function Home() {
 
       {/* Latest News */}
       <section className="bg-gray-50 py-16 md:py-20">
-        <div className="flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6">
 
-  <div>
-    <p className="text-sm font-semibold text-blue-700">
-      School Updates
-    </p>
+          <div className="flex items-end justify-between">
 
-    <h2 className="mt-1 text-2xl font-bold text-gray-900">
-      Latest News
-    </h2>
-  </div>
+            <div>
 
-  <Link
-    to="/news"
-    className="text-sm font-semibold text-blue-700 hover:text-blue-900"
-  >
-    View All News →
-  </Link>
+              <p className="text-sm font-semibold text-blue-700">
+                School Updates
+              </p>
 
-</div>
+              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+                Latest News
+              </h2>
+
+            </div>
+
+            <Link
+              to="/news"
+              className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+            >
+              View All News →
+            </Link>
+
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+
+            {news.map((item) => (
+              <NewsCard
+                key={item.title}
+                news={item}
+              />
+            ))}
+
+          </div>
+
+        </div>
       </section>
 
       {/* Registration Information */}
@@ -287,6 +319,7 @@ function ServiceCard({
 function Stat({ number, label }) {
   return (
     <div className="rounded-xl bg-white p-5">
+
       <p className="text-2xl font-bold text-gray-900">
         {number}
       </p>
@@ -294,6 +327,7 @@ function Stat({ number, label }) {
       <p className="mt-1 text-xs text-gray-500">
         {label}
       </p>
+
     </div>
   )
 }
@@ -316,7 +350,7 @@ function NewsCard({ news }) {
 
       <Link
         to="/news"
-        className="mt-5 inline-flex text-sm font-semibold text-blue-700"
+        className="mt-5 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-900"
       >
         Read more →
       </Link>
